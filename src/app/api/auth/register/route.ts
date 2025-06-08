@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { db } from '~/server/db';
 import { hash } from 'bcryptjs'; // Ensure bcryptjs is installed
-const prisma = new PrismaClient();
 
 interface RegistrationData {
     email: string;
@@ -16,7 +15,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
         }
 
-        const doesUserExist = await prisma.user.findUnique({
+        const doesUserExist = await db.user.findUnique({
             where: { email },
         });
 
@@ -26,7 +25,7 @@ export async function POST(req: Request) {
 
         const hashedPassword = await hash(password, 10); // Hash the password before storing it
 
-        const newUser = await prisma.user.create({
+        const newUser = await db.user.create({
             data: {
                 email,
                 password: hashedPassword, // Store the hashed password

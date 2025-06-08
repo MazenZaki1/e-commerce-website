@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { db } from '~/server/db';
 import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose'; // Import jwt for token generation if needed
 
-const prisma = new PrismaClient();
 
 interface LoginData {
     email: string;
@@ -18,7 +17,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
         }
 
-        const user = await prisma.user.findUnique({
+        const user = await db.user.findUnique({
             where: { email },
         });
 
@@ -30,7 +29,6 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         const isPasswordValid = await bcrypt.compare(password, user.password); // Compare the provided password with the stored hashed password
 
         if (!isPasswordValid) {
@@ -39,7 +37,8 @@ export async function POST(req: Request) {
 
         const token = await new SignJWT({
             user_id: user.user_id,
-            email: user.email
+            email: user.email,
+            role: user.role
         })
             .setProtectedHeader({ alg: 'HS256' })
             .setIssuedAt()
