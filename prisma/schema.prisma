@@ -21,8 +21,8 @@ enum orderStatus {
 
 // Necessary for Next auth
 model Account {
-    account_id                       String  @id @default(cuid())
-    user_id                  String
+    account_id                       Int  @id @default(autoincrement())
+    user_id                  Int
     type                     String
     provider                 String
     providerAccountId        String
@@ -40,13 +40,12 @@ model Account {
 }
 
 model User {
-    user_id            String    @id @default(cuid())
+    user_id            Int    @id @default(autoincrement())
     first_name          String?
     last_name           String?
     email         String   @unique
     emailVerified DateTime?
     password String
-    image         String?
     role          Role      @default(USER)
     createdAt     DateTime  @default(now())
     updatedAt     DateTime  @updatedAt
@@ -54,25 +53,32 @@ model User {
     accounts      Account[]
     orders        Order[]
     cart          Cart[]
+    addresses     Address[]
+    reviews       Review[]
 }
 
 model Product {
-    product_id   String   @id @default(cuid())
+    product_id   Int   @id @default(autoincrement())
+    category_id  Int
     name         String
     description  String?
     price        Float
     image_url    String?
-    category     String?
     stock        Int      @default(0)
+    sold_count   Int      @default(0)
+    is_deleted   Boolean  @default(false)
     createdAt    DateTime @default(now())
     updatedAt    DateTime @updatedAt
 
     orderItems   OrderItem[]
     cartItems    CartItem[]
+    reviews      Review[]
+    category     Category @relation(fields: [category_id], references: [category_id], onDelete: Cascade)
 }
+
 model Order {
-    order_id     String   @id @default(cuid())
-    user_id      String
+    order_id     Int   @id @default(autoincrement())
+    user_id      Int
     total_amount Float
     status       String   @default("pending")
     createdAt    DateTime @default(now())
@@ -83,9 +89,9 @@ model Order {
 }
 
 model OrderItem {
-    order_item_id String   @id @default(cuid())
-    order_id      String
-    product_id    String
+    order_item_id Int   @id @default(autoincrement())
+    order_id      Int
+    product_id    Int
     quantity      Int
     price         Float
 
@@ -94,8 +100,8 @@ model OrderItem {
 }
 
 model Cart {
-    cart_id      String   @id @default(cuid())
-    user_id      String
+    cart_id      Int   @id @default(autoincrement())
+    user_id      Int
     createdAt    DateTime @default(now())
     updatedAt    DateTime @updatedAt
 
@@ -104,11 +110,48 @@ model Cart {
     @@unique([user_id]) // Ensures one cart per user
 }
 model CartItem {
-    cart_item_id String   @id @default(cuid())
-    cart_id      String
-    product_id   String
+    cart_item_id Int   @id @default(autoincrement())
+    cart_id      Int
+    product_id   Int
     quantity     Int
 
     cart         Cart     @relation(fields: [cart_id], references: [cart_id], onDelete: Cascade)
     product      Product  @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+}
+
+model Address {
+    address_id Int   @id @default(autoincrement())
+    user_id    Int
+    address    String
+    city       String
+    state      String
+    zip        String
+    country    String
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+
+    user       User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+}
+
+model Category {
+    category_id Int   @id @default(autoincrement())
+    name        String
+    description String?
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    products    Product[]
+}
+
+model Review {
+    review_id Int   @id @default(autoincrement())
+    user_id   Int
+    product_id Int
+    rating    Int
+    comment   String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user      User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+    product   Product  @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
 }
